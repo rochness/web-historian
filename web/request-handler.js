@@ -44,7 +44,7 @@ exports.handleRequest = function (req, res) {
       data = data.slice(4);
       fs.writeFile(requestURL['archive'].filepath+'.txt', data + "\n");
       res.end();
-      console.log('post data: ', data.slice(4));
+      //console.log('post data: ', data.slice(4));
     });
 
   } else if(requestURL[req.url]){

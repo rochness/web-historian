@@ -1,6 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
+var http = require('http-request');
 
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
@@ -11,7 +12,8 @@ var _ = require('underscore');
 
 exports.paths = {
   siteAssets: path.join(__dirname, '../web/public'),
-  archivedSites: path.join(__dirname, '../archives/sites'),
+  //archivedSites: path.join(__dirname, '../archives/sites'),
+  archivedSites: path.join(__dirname, '../testdata/sites'),
   list: path.join(__dirname, '../archives/sites.txt')
 };
 
@@ -76,33 +78,75 @@ exports.isUrlArchived = function(url, cb, innerCb) {
 
 
 
-exports.downloadUrls = function() {
+exports.downloadUrls = function(urlArray) {
   //get length of content array to slice off later
-  var contentLength = content.length;
   //iterate through array in list (call readListOfUrls)
-  var that = this;
-  this.readListOfUrls(function(content){
-    _.each(content, function(url){
-      $.ajax({
-        url: url,
-        type: 'GET',
-        data: JSON.stringify(html),
-        contentType: 'application/json',
-        success: function (data) {
-          var fd = fs.open(that.path.archivedSites, "w");
-          fs.write(fd, url);
-          fs.close(fd);
-          fs.writeFile(that.path.archivedSites, data );
+  var self = this;
+
+  _.each(urlArray, function(url) {
+      console.log(url);
+      http.get(
+        {
+          url: url,
+          progress: function(current, total) {
+            console.log('downloaded %d bytes from %d', current, total);
+          }
         },
-        error: function (data) {
-          // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
-          console.error('chatterbox: Failed to send message');
-        }
-      });
-    })
-  })
+        self.paths.archivedSites + '/' + url,
+        function(error, response) {
+          if(error) {
+            console.error(error);
+            return;
+          }
+          console.log(response.code, response.header, response.file);
+        })
+      })
+};
+
+
+
+
+
+//   this.readListOfUrls(function(content){
+//     var contentLength = content.length;
+//     _.each(content, function(url){
+//       console.log('archived sites content: ', content);
+//       http.get(
+//         {
+//           url: url,
+//           progress: function(current, total) {
+//             console.log('downloaded %d bytes from %d', current, total);
+//           }
+//         },
+//         self.paths.archivedSites + '/' + url,
+//         function(error, response) {
+//           if(error) {
+//             console.log('error in download')
+//             console.error(error);
+//             return;
+//           }
+//           console.log(response.code, response.header, response.file);
+//         })
+//     });
+//   })
+// };
+      // $.ajax({
+      //   url: url,
+      //   type: 'GET',
+      //   data: JSON.stringify(content),
+      //   contentType: 'application/json',
+      //   success: function (data) {
+      //     var fd = fs.open(self.path.archivedSites, "w");
+      //     fs.write(fd, url);
+      //     fs.close(fd);
+      //     fs.writeFile(self.path.archivedSites, data );
+      //   },
+      //   error: function (data) {
+      //     // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
+      //     console.error('chatterbox: Failed to send message');
+      //   }
+      // });
   
     //submit ajax request for each URL
       //write response content to a file and save in archives
       //remove url from list
-};
