@@ -59,26 +59,50 @@ exports.addUrlToList = function(url, cb) {
   cb();
 };
 
-exports.isUrlArchived = function(url, cb) {
-  var filePath = this.paths.archivedSites;
-
-  fs.readdir(filePath, function(error, files){
-    
+exports.isUrlArchived = function(url, cb, innerCb) {
+  var url = this.modifiedUrl(url);
+  fs.readdir(this.paths.archivedSites, function(error, files){
     if(error){
-      return false;
-      console.log('error in finding url in archives');
+      return 'error';
     } else {
-      if(files.indexOf(this.modifiedUrl(url)) !== -1){
-        cb();
+      if(files.indexOf(url) === -1){
+        cb(false, innerCb);
+      } else{
+        cb(true, innerCb);
       }
     }
   });
-  console.log('archive not found');
-  return false;
-
 };
 
 
 
 exports.downloadUrls = function() {
+  //get length of content array to slice off later
+  var contentLength = content.length;
+  //iterate through array in list (call readListOfUrls)
+  var that = this;
+  this.readListOfUrls(function(content){
+    _.each(content, function(url){
+      $.ajax({
+        url: url,
+        type: 'GET',
+        data: JSON.stringify(html),
+        contentType: 'application/json',
+        success: function (data) {
+          var fd = fs.open(that.path.archivedSites, "w");
+          fs.write(fd, url);
+          fs.close(fd);
+          fs.writeFile(that.path.archivedSites, data );
+        },
+        error: function (data) {
+          // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
+          console.error('chatterbox: Failed to send message');
+        }
+      });
+    })
+  })
+  
+    //submit ajax request for each URL
+      //write response content to a file and save in archives
+      //remove url from list
 };
