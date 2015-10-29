@@ -8,8 +8,8 @@ var requestURL = {
   '/': {url: '/index.html', contentType:'text/html'},
   '/styles.css': {url: '/styles.css', contentType:'text/css'},
   'public': {filepath: archive.paths.siteAssets},
-  //'archive': {filepath: archive.paths.archivedSites, contentType: 'text/html'}
-  'archive': {filepath: '/Users/student/2015-10-web-historian/test/testdata/sites', contentType: 'text/html'}
+  'archive': {filepath: archive.paths.archivedSites, contentType: 'text/html'}
+  //'archive': {filepath: '/Users/student/2015-10-web-historian/test/testdata/sites/', contentType: 'text/html'}
 }
 
 var loadIndex = function(filepath, url, content_type, res) {
@@ -42,9 +42,26 @@ exports.handleRequest = function (req, res) {
     req.on('end', function(){
       res.writeHead(302, {'Content-Type': 'text/html'});
       data = data.slice(4);
-      fs.writeFile(requestURL['archive'].filepath+'.txt', data + "\n");
-      res.end();
-      //console.log('post data: ', data.slice(4));
+      archive.isUrlArchived(
+        data,
+        function(found, loadIndex) {
+          if(found) {
+            loadIndex(requestURL['archive'].filepath, data, requestURL['archive'].contentType, res);
+          } else {
+            archive.isUrlInList(data, function(found) {
+              console.log('isURLInList: ', found);
+              if(!found) {
+                archive.addUrlToList(data, function() {
+                  console.log('URL added to list');
+                });
+              }
+            });
+            loadIndex(requestURL['public'].filepath, '/loading.html', 'text/html', res);
+          }
+        },
+        loadIndex
+        )
+
     });
 
   } else if(requestURL[req.url]){
@@ -56,36 +73,22 @@ exports.handleRequest = function (req, res) {
         if(found) {
           loadIndex(requestURL['archive'].filepath, req.url, requestURL['archive'].contentType, res);
         } else {
-          res.writeHead(404);
-          res.end();
+          //check if the url is in the list
+          archive.isUrlInList(req.url, function(found) {
+            //if it is, send to loading page
+            if(found) {
+              loadIndex(requestURL['public'].filepath, '/loading.html', 'text/html', res);
+            } else {
+            res.writeHead(404);
+            res.end('404 error, this webpage could not be found');
+            }
+          });
         }
       }, 
       loadIndex
     );
   }
-
-
-  //if POST request
-    //isURLArchived(post body data)
-      //return its file
-    //isUrlInList
-      //please wait message
-    //addURLToList
-    //please wait message
 };
 
-// exports.readListOfUrls = function() {
-// };
 
-// exports.isUrlInList = function() {
-// };
-
-// exports.addUrlToList = function() {
-// };
-
-// exports.isUrlArchived = function() {
-// };
-
-// exports.downloadUrls = function() {
-// };
 

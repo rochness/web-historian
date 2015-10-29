@@ -12,10 +12,10 @@ var http = require('http-request');
 
 exports.paths = {
   siteAssets: path.join(__dirname, '../web/public'),
-  //archivedSites: path.join(__dirname, '../archives/sites'),
-  archivedSites: path.join(__dirname, '../testdata/sites'),
-  //list: path.join(__dirname, '../archives/sites.txt'),
-  list: path.join(__dirname, '../testdata/sites.txt')
+  archivedSites: path.join(__dirname, '../archives/sites'),
+  //archivedSites: path.join(__dirname, '../test/testdata/sites'),
+  list: path.join(__dirname, '../archives/sites.txt'),
+  //list: path.join(__dirname, '../testdata/sites.txt')
 };
 
 exports.modifiedUrl = function(url){
@@ -62,6 +62,7 @@ exports.addUrlToList = function(url, cb) {
 
   this.readListOfUrls(function(content) {
     var urlList = content.join("\n") + "\n" + self.modifiedUrl(url);
+    console.log('urls being added to list: ', urlList);
     fs.writeFile(self.paths.list, urlList);
   })
   cb();
@@ -69,6 +70,7 @@ exports.addUrlToList = function(url, cb) {
 
 exports.isUrlArchived = function(url, cb, innerCb) {
   var url = this.modifiedUrl(url);
+  var self = this;
   fs.readdir(this.paths.archivedSites, function(error, files){
     if(error){
       return 'error';
@@ -85,8 +87,6 @@ exports.isUrlArchived = function(url, cb, innerCb) {
 
 
 exports.downloadUrls = function(urlArray) {
-  //get length of content array to slice off later
-  //iterate through array in list (call readListOfUrls)
   var self = this;
 
   _.each(urlArray, function(url) {
@@ -95,7 +95,7 @@ exports.downloadUrls = function(urlArray) {
         {
           url: url,
           progress: function(current, total) {
-            console.log('downloaded %d bytes from %d', current, total);
+          console.log('downloaded %d bytes from %d', current, total);
           }
         },
         self.paths.archivedSites + '/' + url,
@@ -106,9 +106,11 @@ exports.downloadUrls = function(urlArray) {
           }
           console.log(response.code, response.header, response.file);
         })
-      })
+      });
+  self.readListOfUrls(function(list){
+    var newList = list.slice(urlArray.length).join("\n");
+    fs.writeFile(self.paths.list, newList);
+  });
 };
   
-    //submit ajax request for each URL
-      //write response content to a file and save in archives
-      //remove url from list
+    
