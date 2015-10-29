@@ -15,6 +15,13 @@ exports.paths = {
   list: path.join(__dirname, '../archives/sites.txt')
 };
 
+exports.modifiedUrl = function(url){
+  if(url.charAt(0) === '/'){
+    return url.slice(1);
+  } else {
+    return url;
+  }
+};
 // Used for stubbing paths for tests, do not modify
 exports.initialize = function(pathsObj) {
   _.each(pathsObj, function(path, type) {
@@ -25,17 +32,53 @@ exports.initialize = function(pathsObj) {
 // The following function names are provided to you to suggest how you might
 // modularize your code. Keep it clean!
 
-exports.readListOfUrls = function() {
+exports.readListOfUrls = function(cb) {
+  fs.readFile(this.paths.list, function(error, content){
+    if(error){
+      return 'error';
+    } else {
+      content = content.toString('utf-8').split("\n");
+      cb(content);
+    }
+  });
 };
 
-exports.isUrlInList = function() {
+exports.isUrlInList = function(url, cb) {
+  var url = this.modifiedUrl(url);
+  this.readListOfUrls(function(content){
+    if(content.indexOf(url) === -1){
+      cb(false);
+    } else {
+      cb(true);
+    }
+  });  
 };
 
-exports.addUrlToList = function() {
+exports.addUrlToList = function(url, cb) {
+  fs.writeFile(this.paths.list, this.modifiedUrl(url));
+  cb();
 };
 
-exports.isUrlArchived = function() {
+exports.isUrlArchived = function(url, cb) {
+  var filePath = this.paths.archivedSites;
+
+  fs.readdir(filePath, function(error, files){
+    
+    if(error){
+      return false;
+      console.log('error in finding url in archives');
+    } else {
+      if(files.indexOf(this.modifiedUrl(url)) !== -1){
+        cb();
+      }
+    }
+  });
+  console.log('archive not found');
+  return false;
+
 };
+
+
 
 exports.downloadUrls = function() {
 };
