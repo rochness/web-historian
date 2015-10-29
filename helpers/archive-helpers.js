@@ -14,7 +14,8 @@ exports.paths = {
   siteAssets: path.join(__dirname, '../web/public'),
   //archivedSites: path.join(__dirname, '../archives/sites'),
   archivedSites: path.join(__dirname, '../testdata/sites'),
-  list: path.join(__dirname, '../archives/sites.txt')
+  //list: path.join(__dirname, '../archives/sites.txt'),
+  list: path.join(__dirname, '../testdata/sites.txt')
 };
 
 exports.modifiedUrl = function(url){
@@ -57,7 +58,12 @@ exports.isUrlInList = function(url, cb) {
 };
 
 exports.addUrlToList = function(url, cb) {
-  fs.writeFile(this.paths.list, this.modifiedUrl(url));
+  var self = this;
+
+  this.readListOfUrls(function(content) {
+    var urlList = content.join("\n") + "\n" + self.modifiedUrl(url);
+    fs.writeFile(self.paths.list, urlList);
+  })
   cb();
 };
 
@@ -102,50 +108,6 @@ exports.downloadUrls = function(urlArray) {
         })
       })
 };
-
-
-
-
-
-//   this.readListOfUrls(function(content){
-//     var contentLength = content.length;
-//     _.each(content, function(url){
-//       console.log('archived sites content: ', content);
-//       http.get(
-//         {
-//           url: url,
-//           progress: function(current, total) {
-//             console.log('downloaded %d bytes from %d', current, total);
-//           }
-//         },
-//         self.paths.archivedSites + '/' + url,
-//         function(error, response) {
-//           if(error) {
-//             console.log('error in download')
-//             console.error(error);
-//             return;
-//           }
-//           console.log(response.code, response.header, response.file);
-//         })
-//     });
-//   })
-// };
-      // $.ajax({
-      //   url: url,
-      //   type: 'GET',
-      //   data: JSON.stringify(content),
-      //   contentType: 'application/json',
-      //   success: function (data) {
-      //     var fd = fs.open(self.path.archivedSites, "w");
-      //     fs.write(fd, url);
-      //     fs.close(fd);
-      //     fs.writeFile(self.path.archivedSites, data );
-      //   },
-      //   error: function (data) {
-      //     // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
-      //     console.error('chatterbox: Failed to send message');
-      //   }
-      // });
   
     //submit ajax request for each URL
       //write response content to a file and save in archives
