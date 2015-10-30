@@ -36,12 +36,14 @@ exports.initialize = function(pathsObj) {
 // modularize your code. Keep it clean!
 
 exports.readListOfUrls = function(cb) {
+  var self = this;
+
   fs.readFile(this.paths.list, function(error, content){
     if(error){
       return 'error';
     } else {
       content = content.toString('utf-8').split("\n");
-      cb(content);
+      cb(content, self);
     }
   });
 };
@@ -86,8 +88,12 @@ exports.isUrlArchived = function(url, cb, innerCb) {
 
 
 
-exports.downloadUrls = function(urlArray) {
-  var self = this;
+exports.downloadUrls = function(urlArray, context) {
+  if(context !== undefined) {
+    var self = context;
+  } else {
+    var self = this;
+  }
 
   _.each(urlArray, function(url) {
       console.log(url);
